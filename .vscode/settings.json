@@ -2,6 +2,10 @@
     "files.associations": {
         ".fantomasignore": "ignore",
         "cmath": "cpp",
-        "vector": "cpp"
-    }
+        "vector": "cpp",
+        "format": "cpp",
+        "list": "cpp",
+        "xstring": "cpp"
+    },
+    "FSharp.suggestGitignore": false
 }

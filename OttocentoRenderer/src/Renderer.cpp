@@ -74,28 +74,33 @@ glm::vec4 Renderer::TraceRay(const Scene& scene, const Ray& ray)
 	const Sphere* closestSphere = nullptr;
 	float hitDistance = std::numeric_limits<float>::max();
 	
+	// loop and render all spheres in the scene. This can be 
+	// further expanded for all objects in the scene.
 	for (const Sphere& sphere : scene.Spheres)
 	{
-		glm::vec3 origin = ray.Origin - sphere.Position;
-
-		// in a quadratic equation: ax² + bx + c = 0:
-		float a = glm::dot(ray.Direction, ray.Direction);
-		float b = 2.0f * glm::dot(origin, ray.Direction);
-		float c = glm::dot(origin, origin) - sphere.Radius * sphere.Radius;
-
-		// in a quadratic formula discriminant b² - 4ac:
-		float discriminant = b * b - 4.0f * a * c;
-
-		if (discriminant < 0.0f)
-			continue;
-
-		// in a quadratic solution for 2 points
-		// float t0 = (-b + sqrt(discriminant)) / (2.0f * a);
-		float closestT = (-b - sqrt(discriminant)) / (2.0f * a);
-		if (closestT < hitDistance)
+		if (sphere.isVisible)
 		{
-			hitDistance = closestT;
-			closestSphere = &sphere;
+			glm::vec3 origin = ray.Origin - sphere.Position;
+
+			// in a quadratic equation: ax² + bx + c = 0:
+			float a = glm::dot(ray.Direction, ray.Direction);
+			float b = 2.0f * glm::dot(origin, ray.Direction);
+			float c = glm::dot(origin, origin) - sphere.Radius * sphere.Radius;
+
+			// in a quadratic formula discriminant b² - 4ac:
+			float discriminant = b * b - 4.0f * a * c;
+
+			if (discriminant < 0.0f)
+				continue;
+
+			// in a quadratic solution for 2 points
+			// float t0 = (-b + sqrt(discriminant)) / (2.0f * a);
+			float closestT = (-b - sqrt(discriminant)) / (2.0f * a);
+			if (closestT < hitDistance)
+			{
+				hitDistance = closestT;
+				closestSphere = &sphere;
+			}
 		}
 	}
 
@@ -108,12 +113,20 @@ glm::vec4 Renderer::TraceRay(const Scene& scene, const Ray& ray)
 	glm::vec3 origin = ray.Origin - closestSphere->Position;
 	glm::vec3 hitPoint = origin + ray.Direction * hitDistance;
 	glm::vec3 normal = glm::normalize(hitPoint);
-
-	glm::vec3 lightDir = glm::normalize(scene.Lights[0].Position);
-
-	float d = glm::max(glm::dot(normal, -lightDir), 0.0f); // == cos(angle)
+	glm::vec3 lightDir;
+	float d = 0;
 
 	glm::vec3 sphereColor = closestSphere->Albedo;
+
+	// Loop through all lights in the scene.
+	for (size_t i = 0; i < scene.Lights.size(); i++)
+	{
+		if (scene.Lights[i].isActive == true)
+		{
+			lightDir = glm::normalize(scene.Lights[i].Position);
+			d += glm::max(glm::dot(normal, -lightDir), 0.0f); // == cos(angle)
+		}
+	}
 	sphereColor *= d;
 	return glm::vec4(sphereColor, 1);
 }

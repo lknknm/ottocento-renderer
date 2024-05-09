@@ -55,9 +55,17 @@ virtual void OnUIRender() override
 	for (size_t i = 0; i < m_Scene.Lights.size(); i++)
 	{
 		ImGui::PushID(i);
+		ImGui::Checkbox("Active", &m_Scene.Lights[i].isActive);
 		ImGui::DragFloat3("Position", glm::value_ptr(m_Scene.Lights[i].Position), 0.1f);
 		ImGui::Separator();
 		ImGui::PopID();
+	}
+	if (ImGui::Button("Add Light"))
+	{
+		Light light;
+		light.Position = {1.0f, 1.0f, 0.8f};
+		light.Radius = 0.5f;
+		m_Scene.Lights.push_back(light);
 	}
 	ImGui::End();
 
@@ -68,6 +76,7 @@ virtual void OnUIRender() override
 	{
 		ImGui::PushID(i);
 		ImGui::Text("Sphere %i", i);
+		ImGui::Checkbox("Visible", &m_Scene.Spheres[i].isVisible);
 		Sphere& sphere = m_Scene.Spheres[i];
 		ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f);
 		ImGui::DragFloat("Radius", &sphere.Radius);
@@ -76,6 +85,14 @@ virtual void OnUIRender() override
 		ImGui::Separator();
 
 		ImGui::PopID();
+	}
+	if (ImGui::Button("Add Sphere"))
+	{
+		Sphere sphere;
+		sphere.Position = {1.0f, 0.0f, -5.0f};
+		sphere.Albedo = {1.0f, 1.0f, 1.0f};
+		sphere.Radius = 0.5f;
+		m_Scene.Spheres.push_back(sphere);
 	}
 	ImGui::End();
 

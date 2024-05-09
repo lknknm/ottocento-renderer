@@ -8,6 +8,7 @@ struct Sphere
     glm::vec3 Position{0.0f};
     float Radius = 0.5f;
     glm::vec3 Albedo{1.0f};
+    bool isVisible = true;
 };
 
 struct Light
@@ -15,6 +16,7 @@ struct Light
     glm::vec3 Position{-1.0f};
     float Radius = 0.5f;
     float Intensity = 0.5f;
+    bool isActive = false;
 };
 
 struct Scene
