@@ -17,8 +17,15 @@ class ExampleLayer : public Walnut::Layer
 public:
 ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f) 
 {
-	Material& whiteSphere = m_Scene.Materials.emplace_back(); whiteSphere.Albedo = {1.0f, 1.0f, 1.0f}; whiteSphere.Roughness = 0.3f;
-	Material& greySphere = m_Scene.Materials.emplace_back(); greySphere.Albedo = {0.5f, 0.5f, 0.5f}; greySphere.Roughness = 0.2f;
+	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.3f;
+	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {0.0f, 0.0f, 0.0f}; BlackMat.Roughness = 0.2f;
+	
+	Material& LightMaterial = m_Scene.Materials.emplace_back(); 
+	LightMaterial.Albedo = {0.8f, 0.5f, 0.2f}; 
+	LightMaterial.Roughness = 0.1f; 
+	LightMaterial.EmissionColor = LightMaterial.Albedo; 
+	LightMaterial.EmissionPower = 2.0f;
+
 	{	
 		Sphere sphere;
 		sphere.Position = {0.0f, 0.0f, 0.0f};
@@ -47,19 +54,13 @@ virtual void OnUpdate(float ts) override
 {
 	if (m_Camera.OnUpdate(ts))
 		m_Renderer.ResetFrameIndex();
-
 }
 
 //----------------------------------------------------------------------------
 virtual void OnUIRender() override
 {
 	ImGui::Begin("Render");
-	if(ImGui::Button("Render"))
-	{
-		Render();
-	}
 	ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
-
 	if(ImGui::Button("Reset"))
 	{
 		m_Renderer.ResetFrameIndex();
@@ -72,8 +73,13 @@ virtual void OnUIRender() override
 	for (size_t i = 0; i < m_Scene.Lights.size(); i++)
 	{
 		ImGui::PushID(i);
-		ImGui::Checkbox("Active", &m_Scene.Lights[i].isActive);
+
+		ImGui::Checkbox("Active", &m_Scene.Lights[i].isActive); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
 		ImGui::DragFloat3("Position", glm::value_ptr(m_Scene.Lights[i].Position), 0.1f);
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
 		ImGui::Separator();
 		ImGui::PopID();
 	}
@@ -93,11 +99,17 @@ virtual void OnUIRender() override
 	{
 		ImGui::PushID(i);
 		ImGui::Text("Sphere %i", i);
-		ImGui::Checkbox("Visible", &m_Scene.Spheres[i].isVisible);
+		ImGui::Checkbox("Visible", &m_Scene.Spheres[i].isVisible); if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 		Sphere& sphere = m_Scene.Spheres[i];
-		ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f);
-		ImGui::DragFloat("Radius", &sphere.Radius);
-		ImGui::DragInt("Material", &sphere.MaterialIndex, 1.0f, 0, (int)m_Scene.Materials.size() - 1);
+
+		ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::DragFloat("Radius", &sphere.Radius); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::DragInt("Material", &sphere.MaterialIndex, 1.0f, 0, (int)m_Scene.Materials.size() - 1); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 
 		ImGui::Separator();
 		ImGui::PopID();
@@ -110,8 +122,10 @@ virtual void OnUIRender() override
 		sphere.Radius = 0.5f;
 		m_Scene.Spheres.push_back(sphere);
 	}
+	ImGui::End();
 
 	ImGui::Separator();
+	ImGui::Begin("Material Settings");
 	ImGui::Text("Material Settings");
 	ImGui::Separator();
 	for (size_t i = 0; i < m_Scene.Materials.size(); i++)
@@ -120,14 +134,25 @@ virtual void OnUIRender() override
 
 		ImGui::Text("Material %i", i);
 		Material& material = m_Scene.Materials[i];
-		ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo));
-		ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f);
-		ImGui::DragFloat("Metallic", &material.Metallic, 0.05f, 0.0f, 1.0f);
+
+		ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo)); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::DragFloat("Metallic", &material.Metallic, 0.05f, 0.0f, 1.0f); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::ColorEdit3("Emission Color", glm::value_ptr(material.EmissionColor)); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::DragFloat("Emission Power", &material.EmissionPower, 0.05f, 0.0f, FLT_MAX); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 		
 		ImGui::Separator();
 		ImGui::PopID();
 	}
-
 	ImGui::End();
 
 	ImGui::Begin("Debug");
@@ -146,7 +171,6 @@ virtual void OnUIRender() override
 
 	ImGui::End();
 	ImGui::PopStyleVar();
-
 	Render();
 }
 
