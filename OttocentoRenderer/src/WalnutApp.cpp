@@ -17,8 +17,8 @@ class ExampleLayer : public Walnut::Layer
 public:
 ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f) 
 {
-	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.3f;
-	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {0.0f, 0.0f, 0.0f}; BlackMat.Roughness = 0.2f;
+	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.75f;
+	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {0.0f, 0.0f, 0.0f}; BlackMat.Roughness = 0.2f; BlackMat.Metallic = true;
 
 	Material& LightMaterial = m_Scene.Materials.emplace_back(); 
 	LightMaterial.Albedo = {0.8f, 0.5f, 0.2f}; 
@@ -47,6 +47,13 @@ ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f)
 		light.Radius = 0.5f;
 		m_Scene.Lights.push_back(light);
 	}
+	{
+		Light light;
+		light.Position = {0.0f, 1.0f, 1.0f};
+		light.Radius = 0.2f;
+		light.isActive = true;
+		m_Scene.Lights.push_back(light);
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -73,8 +80,14 @@ virtual void OnUIRender() override
 
 		ImGui::Checkbox("Active", &m_Scene.Lights[i].isActive); 
 		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+		
+		ImGui::ColorEdit3("Light Color", glm::value_ptr(m_Scene.Lights[i].lightColor)); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 
 		ImGui::DragFloat3("Position", glm::value_ptr(m_Scene.Lights[i].Position), 0.1f);
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+		
+		ImGui::DragFloat("Intensity", (&m_Scene.Lights[i].Intensity), 0.1f, 0.0f, 5000.0f, "%.3f");
 		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 
 		ImGui::Separator();

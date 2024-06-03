@@ -15,6 +15,7 @@ struct Material
     bool Metallic = 0;
     glm::vec3 EmissionColor{ 0.0f };
 	float EmissionPower = 0.0f;
+    float AmbientOcclusion;
 
 	glm::vec3 GetEmission() const { return EmissionColor * EmissionPower; }
 };
@@ -29,6 +30,7 @@ struct Sphere
 
 struct Light
 {
+    glm::vec3 lightColor{20.0f};
     glm::vec3 Position{-1.0f};
     float Radius = 0.5f;
     float Intensity = 0.5f;

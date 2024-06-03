@@ -22,6 +22,7 @@ public:
 	struct Settings
 	{
 		bool Accumulate = true;
+		int bounces = 12;
 	};
 
 	Renderer() = default;
@@ -29,9 +30,7 @@ public:
 	void Render(const Scene& scene, const Camera& camera);
 	void ResetFrameIndex() { m_FrameIndex = 1; }
 	Settings& GetSettings() { return m_Settings; }
-
 	std::shared_ptr<Walnut::Image> GetFinalImage() const { return m_FinalImage; }
-	
 
 private:
 	std::shared_ptr<Walnut::Image> m_FinalImage;
@@ -50,7 +49,7 @@ private:
 	HitPayload TraceRay(const Ray& ray);
 	HitPayload ClosestHit(const Ray& ray, float hitDistance, int objectIndex);
 	HitPayload Miss(const Ray& ray);
-	double ggxDistribution(Material material, float nDotHalfVec);
+	float ggxDistribution(Material material, float nDotHalfVec);
 	float geometryGGX(Material material, float dotProduct);
-	glm::vec3 schlickFresnel(Material material, float viewDocHalfVec);
+	glm::vec3 schlickFresnel(float cosTheta, glm::vec3 F0);
 };

@@ -154,40 +154,58 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	ray.Origin = m_ActiveCamera->GetPosition();
 	ray.Direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
 	glm::vec3 finalColor(0.0f);
+	glm::vec3 Lo = glm::vec3(0.0f);	// reflectance equation
 	float contribution = 1.0f;
+	glm::vec3 F0 = glm::vec3(0.04f);
 
-	int bounces = 5;
-	for (int i = 0; i < bounces; i++)
+	for (int i = 0; i < m_Settings.bounces; i++)
 	{
 		Renderer::HitPayload payload = TraceRay(ray);
+		glm::vec3 viewVector = glm::normalize(ray.Origin - payload.WorldPosition);
 		if (payload.HitDistance < 0.0f)
 		{
 			glm::vec3 skyColor = glm::vec3(0.0f, 0.0f, 0.0f);
 			finalColor += skyColor * contribution;
 			break;
 		}
- 
-		glm::vec3 lightDir;
-		float lightIntensity = 0;
 		const Sphere& sphere = m_ActiveScene->Spheres[payload.ObjectIndex];
 		const Material& material = m_ActiveScene->Materials[sphere.MaterialIndex];
-		glm::vec3 objectColor = material.Albedo;
-
-		// Loop through all lights in the scene.
-		for (size_t i = 0; i < m_ActiveScene->Lights.size(); i++)
-		{
-			if (m_ActiveScene->Lights[i].isActive == true)
-			{
-				lightDir = glm::normalize(m_ActiveScene->Lights[i].Position);
-				lightIntensity += glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
-			}
-		}
+		F0 = mix(F0, material.Albedo, material.Metallic);
 		
-		objectColor *= lightIntensity;
-		// finalColor = (DiffuseBRDF + SpecularBRDF) * LightIntensity *nDotL
-		finalColor += objectColor * contribution;
-		contribution *= 0.5;
+		// Loop through all lights in the scene.
+		for (size_t j = 0; j < m_ActiveScene->Lights.size(); j++)
+		{
+			if (m_ActiveScene->Lights[j].isActive == true)
+			{
+				// calculate per-light radiance
+				glm::vec3 Lradiance = glm::normalize(m_ActiveScene->Lights[j].Position - payload.WorldPosition);
+				glm::vec3 halfVector = normalize(viewVector + Lradiance);
+				float distance = length(m_ActiveScene->Lights[j].Position - payload.WorldPosition);
+				float attenuation = m_ActiveScene->Lights[j].Intensity / (distance * distance);
+				glm::vec3 radiance = m_ActiveScene->Lights[j].lightColor * attenuation;
+		
+				float normalDotH = glm::max(dot(payload.WorldNormal, halfVector), 0.0f);
+				float viewDotH = glm::max(dot(viewVector, halfVector), 0.0f);
+				float normalDotL = glm::max(dot(payload.WorldNormal, Lradiance), 0.0f);
+				float normalDotV = glm::max(dot(payload.WorldNormal, viewVector), 0.0f);
 
+				//cook-torrance BRDF
+				glm::vec3 FresnelFactor = schlickFresnel(glm::max(glm::dot(halfVector, viewVector), 0.0f), F0);
+				glm::vec3 kS = FresnelFactor;
+				glm::vec3 kD = glm::vec3(1.0f) - kS;
+				kD *= 1.0f - (float)material.Metallic;
+				
+				glm::vec3 SpecBRDF_numerator = ggxDistribution(material, normalDotH) * geometryGGX(material, normalDotL) * geometryGGX(material, normalDotV) * FresnelFactor;
+				float SpecBRDF_denominator = 4.0f * normalDotV * normalDotL + 0.0001f;
+				glm::vec3 SpecularBRDF = SpecBRDF_numerator / SpecBRDF_denominator;
+
+				Lo += (kD * material.Albedo / (float)M_PI + SpecularBRDF) * radiance * normalDotL;
+			}
+		}		
+		glm::vec3 ambient = glm::vec3(0.03f) * material.Albedo * material.AmbientOcclusion;
+		glm::vec3 color = ambient + Lo;
+		color = color / (color + glm::vec3(1.0f));
+		finalColor = pow(color, glm::vec3(1.0f/2.2f));
 		ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
 		ray.Direction = glm::reflect(ray.Direction, payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
 	}
@@ -225,11 +243,11 @@ Renderer::HitPayload Renderer::Miss(const Ray& ray)
 //----------------------------------------------------------------------------
 // Normal Distribution Function based on the GGX formula by Trowbridge and Reitz.
 // in which D = α² / (π*(dot(normal,halfVector)²*(α² - 1) + 1)²
-double Renderer::ggxDistribution(Material material, float nDotHalfVec)
+float Renderer::ggxDistribution(Material material, float nDotHalfVec)
 {
 	float alpha2 = material.Roughness * material.Roughness * material.Roughness * material.Roughness;
 	float normalDistFunction = nDotHalfVec * nDotHalfVec* (alpha2 - 1) + 1;
-	double ggxDistribution = alpha2 / (M_PI * normalDistFunction * normalDistFunction);
+	float ggxDistribution = alpha2 / ((float)M_PI * normalDistFunction * normalDistFunction);
 	return ggxDistribution;
 }
 
@@ -247,11 +265,7 @@ float Renderer::geometryGGX(Material material, float dotProduct)
 //----------------------------------------------------------------------------
 // Fresnel Function based on the Schlick Approximation
 // Defined as F = F0 + (1-F0) * (1 - dot(view, half))5
-glm::vec3 Renderer::schlickFresnel(Material material, float viewDocHalfVec)
+glm::vec3 Renderer::schlickFresnel(float cosTheta, glm::vec3 F0)
 {
-	glm::vec3 F0(0.04f);
-	if (material.Metallic)
-		F0 = material.Albedo;
-	glm::vec3 ret = F0 + (1.0f - F0) * pow(glm::clamp(1.0f - viewDocHalfVec, 0.0f, 1.0f), 5.0f);
-	return ret;
+	return F0 + (1.0f - F0) * pow(glm::clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
 }

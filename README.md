@@ -20,4 +20,5 @@ Once you've cloned, run `scripts/Setup.bat` to generate Visual Studio 2022 solut
  - [The Cherno Ray Tracing series.](https://www.youtube.com/watch?v=gfW1Fhd9u9Q&list=PLlrATfBNZ98edc5GshdBtREv5asFW3yXl)
  - [RayTracing in One Weekend](https://raytracing.github.io/)
  - [Scratch a Pixel 4.0: Learn Computer Graphics Programming](https://www.scratchapixel.com/index.html)
-
+ - [Stanford CS348b Lecture 12 — Reflection Models](https://graphics.stanford.edu/courses/cs348b-18-spring-content/lectures/12_reflection2/12_reflection2_slides.pdf)
+ - [Physically Based Rendering // OpenGL Tutorial #43](https://www.youtube.com/watch?v=XK_p2MxGBQs)
