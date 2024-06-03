@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "Walnut/Random.h"
 #include <execution>
+# define M_PI           3.14159265358979323846  /* pi */
 
 namespace Utils 
 {
@@ -152,42 +153,45 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	Ray ray;
 	ray.Origin = m_ActiveCamera->GetPosition();
 	ray.Direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
-	glm::vec3 light(0.0f);
-	glm::vec3 contribution(1.0f);
+	glm::vec3 finalColor(0.0f);
+	float contribution = 1.0f;
 
-	int bounces = 4;
+	int bounces = 5;
 	for (int i = 0; i < bounces; i++)
 	{
 		Renderer::HitPayload payload = TraceRay(ray);
 		if (payload.HitDistance < 0.0f)
 		{
 			glm::vec3 skyColor = glm::vec3(0.0f, 0.0f, 0.0f);
-			//light += skyColor * contribution;
+			finalColor += skyColor * contribution;
 			break;
 		}
-
+ 
 		glm::vec3 lightDir;
 		float lightIntensity = 0;
 		const Sphere& sphere = m_ActiveScene->Spheres[payload.ObjectIndex];
 		const Material& material = m_ActiveScene->Materials[sphere.MaterialIndex];
-		glm::vec3 sphereColor = material.Albedo;
+		glm::vec3 objectColor = material.Albedo;
 
 		// Loop through all lights in the scene.
-		// for (size_t i = 0; i < m_ActiveScene->Lights.size(); i++)
-		// {
-		// 	if (m_ActiveScene->Lights[i].isActive == true)
-		// 	{
-		// 		lightDir = glm::normalize(m_ActiveScene->Lights[i].Position);
-		// 		lightIntensity += glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
-		// 	}
-		// }
-		contribution *= material.Albedo;
-		light += material.GetEmission();
+		for (size_t i = 0; i < m_ActiveScene->Lights.size(); i++)
+		{
+			if (m_ActiveScene->Lights[i].isActive == true)
+			{
+				lightDir = glm::normalize(m_ActiveScene->Lights[i].Position);
+				lightIntensity += glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
+			}
+		}
+		
+		objectColor *= lightIntensity;
+		// finalColor = (DiffuseBRDF + SpecularBRDF) * LightIntensity *nDotL
+		finalColor += objectColor * contribution;
+		contribution *= 0.5;
 
 		ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-		ray.Direction = glm::normalize(payload.WorldNormal + Walnut::Random::InUnitSphere());
+		ray.Direction = glm::reflect(ray.Direction, payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
 	}
-	return glm::vec4(light, 1.0f);
+	return glm::vec4(finalColor, 1.0f);
 }
 
 //----------------------------------------------------------------------------
@@ -216,4 +220,38 @@ Renderer::HitPayload Renderer::Miss(const Ray& ray)
 	Renderer::HitPayload payload;
 	payload.HitDistance = -1.0f;
 	return payload;
+}
+
+//----------------------------------------------------------------------------
+// Normal Distribution Function based on the GGX formula by Trowbridge and Reitz.
+// in which D = α² / (π*(dot(normal,halfVector)²*(α² - 1) + 1)²
+double Renderer::ggxDistribution(Material material, float nDotHalfVec)
+{
+	float alpha2 = material.Roughness * material.Roughness * material.Roughness * material.Roughness;
+	float normalDistFunction = nDotHalfVec * nDotHalfVec* (alpha2 - 1) + 1;
+	double ggxDistribution = alpha2 / (M_PI * normalDistFunction * normalDistFunction);
+	return ggxDistribution;
+}
+
+//----------------------------------------------------------------------------
+// Geometry Function based on the Schlik-GGX by Schlick and Beckman.
+// This function is defined as G = dot(normal,view) / dot(normal,view)*(1-K) + K
+// where the constant K is defined by the equation K = (α + 1)² / 8.
+float Renderer::geometryGGX(Material material, float dotProduct)
+{
+	float k = (material.Roughness + 1.0f) * (material.Roughness + 1.0f) / 8.0f;
+	float denominator = dotProduct * (1 - k) + k;
+	return dotProduct / denominator;
+}
+
+//----------------------------------------------------------------------------
+// Fresnel Function based on the Schlick Approximation
+// Defined as F = F0 + (1-F0) * (1 - dot(view, half))5
+glm::vec3 Renderer::schlickFresnel(Material material, float viewDocHalfVec)
+{
+	glm::vec3 F0(0.04f);
+	if (material.Metallic)
+		F0 = material.Albedo;
+	glm::vec3 ret = F0 + (1.0f - F0) * pow(glm::clamp(1.0f - viewDocHalfVec, 0.0f, 1.0f), 5.0f);
+	return ret;
 }

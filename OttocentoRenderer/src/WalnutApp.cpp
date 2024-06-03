@@ -19,7 +19,7 @@ ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f)
 {
 	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.3f;
 	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {0.0f, 0.0f, 0.0f}; BlackMat.Roughness = 0.2f;
-	
+
 	Material& LightMaterial = m_Scene.Materials.emplace_back(); 
 	LightMaterial.Albedo = {0.8f, 0.5f, 0.2f}; 
 	LightMaterial.Roughness = 0.1f; 
@@ -59,12 +59,9 @@ virtual void OnUpdate(float ts) override
 //----------------------------------------------------------------------------
 virtual void OnUIRender() override
 {
-	ImGui::Begin("Render");
-	ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
-	if(ImGui::Button("Reset"))
-	{
-		m_Renderer.ResetFrameIndex();
-	}
+	ImGui::Begin("Environment");
+	ImGui::ColorEdit3("Background Color", glm::value_ptr(m_Scene.SkyColor.Albedo)); 
+	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 	ImGui::End();
 
 	ImGui::Begin("Light Settings");
@@ -141,7 +138,7 @@ virtual void OnUIRender() override
 		ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f); 
 		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 
-		ImGui::DragFloat("Metallic", &material.Metallic, 0.05f, 0.0f, 1.0f); 
+		ImGui::Checkbox("Metallic", &material.Metallic); 
 		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 
 		ImGui::ColorEdit3("Emission Color", glm::value_ptr(material.EmissionColor)); 

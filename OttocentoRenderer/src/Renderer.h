@@ -6,6 +6,7 @@
 #include <Walnut/Image.h>
 #include <memory>
 
+
 class Renderer
 {
 public:
@@ -30,6 +31,7 @@ public:
 	Settings& GetSettings() { return m_Settings; }
 
 	std::shared_ptr<Walnut::Image> GetFinalImage() const { return m_FinalImage; }
+	
 
 private:
 	std::shared_ptr<Walnut::Image> m_FinalImage;
@@ -44,9 +46,11 @@ private:
 	glm::vec4* m_AccumulationData = nullptr;
 	uint32_t m_FrameIndex = 1;
 
-private:
 	glm::vec4 PerPixel(uint32_t x, uint32_t y); // RayGen per pixel
 	HitPayload TraceRay(const Ray& ray);
 	HitPayload ClosestHit(const Ray& ray, float hitDistance, int objectIndex);
 	HitPayload Miss(const Ray& ray);
+	double ggxDistribution(Material material, float nDotHalfVec);
+	float geometryGGX(Material material, float dotProduct);
+	glm::vec3 schlickFresnel(Material material, float viewDocHalfVec);
 };

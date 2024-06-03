@@ -3,11 +3,16 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+struct SkyColor
+{
+    glm::vec3 Albedo{ 0.5f };
+};
+
 struct Material
 {
     glm::vec3 Albedo{ 1.0f };
     float Roughness = 1.0f;
-    float Metallic = 0.0f;
+    bool Metallic = 0;
     glm::vec3 EmissionColor{ 0.0f };
 	float EmissionPower = 0.0f;
 
@@ -35,4 +40,5 @@ struct Scene
     std::vector<Sphere> Spheres;
     std::vector<Light> Lights;
     std::vector<Material> Materials;
+    SkyColor SkyColor;
 };
