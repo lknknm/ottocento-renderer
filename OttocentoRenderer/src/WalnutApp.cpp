@@ -4,6 +4,7 @@
 #include "Walnut/Image.h"
 #include "Walnut/Random.h"
 #include "Walnut/Timer.h"
+#include <Walnut/ImGui/imnodes.h>
 
 #include "Camera.h"
 #include "Renderer.h"
@@ -66,11 +67,13 @@ virtual void OnUpdate(float ts) override
 //----------------------------------------------------------------------------
 virtual void OnUIRender() override
 {
+	//----------------------------------------------------------------------------
 	ImGui::Begin("Environment");
 	ImGui::ColorEdit3("Background Color", glm::value_ptr(m_Scene.SkyColor.Albedo)); 
 	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 	ImGui::End();
 
+	//----------------------------------------------------------------------------
 	ImGui::Begin("Light Settings");
 	ImGui::Text("Light Settings");
 	ImGui::Separator();
@@ -101,7 +104,43 @@ virtual void OnUIRender() override
 		m_Scene.Lights.push_back(light);
 	}
 	ImGui::End();
+	//----------------------------------------------------------------------------
 
+	//----------------------------------------------------------------------------
+	ImGui::Begin("Shader Editor");
+
+	ImNodes::BeginNodeEditor();
+	for (size_t i = 0; i < m_Scene.Materials.size(); i++)
+	{
+		ImNodes::BeginNode(i);
+		ImNodes::BeginNodeTitleBar();
+		ImGui::TextUnformatted("Principled BRDF");
+		ImNodes::EndNodeTitleBar();
+		Material& material = m_Scene.Materials[i];
+		
+		ImGui::ColorEdit3("Base Color", glm::value_ptr(material.Albedo)); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::Checkbox("Metallic", &material.Metallic); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::ColorEdit3("Emission Color", glm::value_ptr(material.EmissionColor)); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::DragFloat("Emission Power", &material.EmissionPower, 0.05f, 0.0f, FLT_MAX); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+		
+		ImNodes::EndNode();
+	}
+	ImNodes::EndNodeEditor();
+	
+	ImGui::End();
+	//----------------------------------------------------------------------------
+	
+	//----------------------------------------------------------------------------
 	ImGui::Begin("Scene Settings");
 	ImGui::Text("Scene Settings");
 	ImGui::Separator();
@@ -133,42 +172,9 @@ virtual void OnUIRender() override
 		m_Scene.Spheres.push_back(sphere);
 	}
 	ImGui::End();
+	//----------------------------------------------------------------------------
 
-	ImGui::Separator();
-	ImGui::Begin("Material Settings");
-	ImGui::Text("Material Settings");
-	ImGui::Separator();
-	for (size_t i = 0; i < m_Scene.Materials.size(); i++)
-	{
-		ImGui::PushID(i);
-
-		ImGui::Text("Material %i", i);
-		Material& material = m_Scene.Materials[i];
-
-		ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo)); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::Checkbox("Metallic", &material.Metallic); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::ColorEdit3("Emission Color", glm::value_ptr(material.EmissionColor)); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::DragFloat("Emission Power", &material.EmissionPower, 0.05f, 0.0f, FLT_MAX); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-		
-		ImGui::Separator();
-		ImGui::PopID();
-	}
-	ImGui::End();
-
-	ImGui::Begin("Debug");
-	ImGui::Text("Last Render: %.3fms", m_LastRenderTime);
-	ImGui::End();
-
+	//----------------------------------------------------------------------------
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	ImGui::Begin("Viewport");
 
@@ -179,7 +185,10 @@ virtual void OnUIRender() override
 	if (image)
 		ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0,1), ImVec2(1,0));
 
+	ImGui::Text("Last Render: %.3fms", m_LastRenderTime);
 	ImGui::End();
+	//----------------------------------------------------------------------------
+	
 	ImGui::PopStyleVar();
 	Render();
 }
