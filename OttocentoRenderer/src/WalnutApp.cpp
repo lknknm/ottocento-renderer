@@ -5,7 +5,6 @@
 #include "Walnut/Random.h"
 #include "Walnut/Timer.h"
 #include <Walnut/ImGui/imnodes.h>
-#include "../Platform/GUI/Walnut/UI/UI.h"
 
 #include "Camera.h"
 #include "Renderer.h"
