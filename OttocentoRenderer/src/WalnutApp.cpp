@@ -5,6 +5,7 @@
 #include "Walnut/Random.h"
 #include "Walnut/Timer.h"
 #include <Walnut/ImGui/imnodes.h>
+#include "../Platform/GUI/Walnut/UI/UI.h"
 
 #include "Camera.h"
 #include "Renderer.h"
@@ -19,7 +20,7 @@ public:
 ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f) 
 {
 	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.35f;
-	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {0.0f, 0.0f, 0.0f}; BlackMat.Roughness = 0.35f; BlackMat.Metallic = true;
+	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {1.0f, 1.0f, 1.0f}; BlackMat.Roughness = 0.35f; BlackMat.Metallic = true;
 	Material& WhiteMat = m_Scene.Materials.emplace_back(); WhiteMat.Albedo = {1.0f, 1.0f, 1.0f}; WhiteMat.Roughness = 0.2f; WhiteMat.Metallic = true;
 	{	
 		Sphere sphere;
@@ -59,6 +60,14 @@ ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f)
 		light.Intensity = 0.7f;
 		m_Scene.Lights.push_back(light);
 	}
+	{
+		Light light;
+		light.Position = {7.2f, 14.6f, -16.7f};
+		light.lightColor = {1.0f, 1.0f, 1.0f};
+		light.isActive = true;
+		light.Intensity = 15.0f;
+		m_Scene.Lights.push_back(light);
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -76,6 +85,19 @@ virtual void OnUIRender() override
 	ImGui::ColorEdit3("Background Color", glm::value_ptr(m_Scene.SkyColor.Albedo)); 
 	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 	ImGui::End();
+
+	//----------------------------------------------------------------------------
+	ImGui::Begin("Camera Settings");
+
+	ImGui::DragFloat3("Position", glm::value_ptr(m_Camera.m_Position), 0.1f);
+	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+	
+	ImGui::Text("Camera Forward X: %f", m_Camera.GetDirection().x);
+	ImGui::Text("Camera Forward Y: %f", m_Camera.GetDirection().y);
+	ImGui::Text("Camera Forward Z: %f", m_Camera.GetDirection().z);
+	
+	ImGui::End();
+	//----------------------------------------------------------------------------
 
 	//----------------------------------------------------------------------------
 	ImGui::Begin("Light Settings");
@@ -218,15 +240,20 @@ private:
 	glm::vec3 LightPos;
 };
 
+
+
 //----------------------------------------------------------------------------
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 {
 	Walnut::ApplicationSpecification spec;
 	spec.Name = "Ottocento Renderer";
-
+	spec.Width = 1280;
+	spec.Height = 720;
+	
 	Walnut::Application* app = new Walnut::Application(spec);
-	app->PushLayer<ExampleLayer>();
-	app->SetMenubarCallback([app]()
+	std::shared_ptr<ExampleLayer> exampleLayer = std::make_shared<ExampleLayer>();
+	app->PushLayer(exampleLayer);
+	app->SetMenubarCallback([app, exampleLayer]()
 	{
 		if (ImGui::BeginMenu("File"))
 		{

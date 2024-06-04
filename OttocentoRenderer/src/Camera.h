@@ -20,6 +20,8 @@ public:
 	const glm::vec3& GetDirection() const { return m_ForwardDirection; }
 
 	const std::vector<glm::vec3>& GetRayDirections() const { return m_RayDirections; }
+	
+	glm::vec3 m_Position{0.0f, 0.0f, 0.0f};
 
 	float GetRotationSpeed();
 private:
@@ -31,13 +33,12 @@ private:
 	glm::mat4 m_View{ 1.0f };
 	glm::mat4 m_InverseProjection{ 1.0f };
 	glm::mat4 m_InverseView{ 1.0f };
+	glm::vec3 m_ForwardDirection{0.0f, 0.0f, 0.0f};
 
 	float m_VerticalFOV = 45.0f;
 	float m_NearClip = 0.1f;
 	float m_FarClip = 100.0f;
 
-	glm::vec3 m_Position{0.0f, 0.0f, 0.0f};
-	glm::vec3 m_ForwardDirection{0.0f, 0.0f, 0.0f};
 
 	// Cached ray directions
 	std::vector<glm::vec3> m_RayDirections;
