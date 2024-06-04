@@ -18,20 +18,14 @@ class ExampleLayer : public Walnut::Layer
 public:
 ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f) 
 {
-	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.75f;
-	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {0.0f, 0.0f, 0.0f}; BlackMat.Roughness = 0.2f; BlackMat.Metallic = true;
-
-	Material& LightMaterial = m_Scene.Materials.emplace_back(); 
-	LightMaterial.Albedo = {0.8f, 0.5f, 0.2f}; 
-	LightMaterial.Roughness = 0.1f; 
-	LightMaterial.EmissionColor = LightMaterial.Albedo; 
-	LightMaterial.EmissionPower = 2.0f;
-
+	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.35f;
+	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {0.0f, 0.0f, 0.0f}; BlackMat.Roughness = 0.35f; BlackMat.Metallic = true;
+	Material& WhiteMat = m_Scene.Materials.emplace_back(); WhiteMat.Albedo = {1.0f, 1.0f, 1.0f}; WhiteMat.Roughness = 0.2f; WhiteMat.Metallic = true;
 	{	
 		Sphere sphere;
 		sphere.Position = {0.0f, 0.0f, 0.0f};
 		sphere.Radius = 1.0f;
-		sphere.MaterialIndex = 0;
+		sphere.MaterialIndex = 2;
 		m_Scene.Spheres.push_back(sphere);
 	}
 	
@@ -43,16 +37,26 @@ ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f)
 		m_Scene.Spheres.push_back(sphere);
 	}
 	{
+		Sphere sphere;
+		sphere.Position = {0.0f, 0.0f, -2.1f};
+		sphere.Radius = 0.5f;
+		sphere.MaterialIndex = 2;
+		m_Scene.Spheres.push_back(sphere);
+	}
+	{
 		Light light;
-		light.Position = {-1.0f, -1.0f, -1.0f};
-		light.Radius = 0.5f;
+		light.Position = {-0.8f, -0.8f, -1.6f};
+		light.lightColor = {0.0f, 0.2f, 0.8f};
+		light.isActive = true;
+		light.Intensity = 31.8f;
 		m_Scene.Lights.push_back(light);
 	}
 	{
 		Light light;
 		light.Position = {0.0f, 1.0f, 1.0f};
-		light.Radius = 0.2f;
+		light.lightColor = {1.0f, 0.0f, 0.0f};
 		light.isActive = true;
+		light.Intensity = 0.7f;
 		m_Scene.Lights.push_back(light);
 	}
 }
