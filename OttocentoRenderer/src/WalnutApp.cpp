@@ -12,6 +12,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
+#include <dinput.h>
+
 #include "imgui_internal.h"
 
 using namespace Walnut;
@@ -21,7 +23,7 @@ class ExampleLayer : public Walnut::Layer
 public:
 ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f) 
 {
-	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.35f;
+	Material& RedMat = m_Scene.Materials.emplace_back(); RedMat.Name = "RedMat"; RedMat.Albedo = {1.0f, 0.0f, 0.0f}; RedMat.Roughness = 0.35f;
 	Material& BlackMat = m_Scene.Materials.emplace_back(); BlackMat.Albedo = {1.0f, 1.0f, 1.0f}; BlackMat.Roughness = 0.35f; BlackMat.Metallic = true;
 	Material& WhiteMat = m_Scene.Materials.emplace_back(); WhiteMat.Albedo = {1.0f, 1.0f, 1.0f}; WhiteMat.Roughness = 0.2f; WhiteMat.Metallic = true;
 	{	
@@ -150,11 +152,13 @@ virtual void OnUIRender() override
 		ImNodes::PushColorStyle(ImNodesCol_NodeBackgroundHovered, IM_COL32(0x17, 0x17, 0x17, 255));
 		ImNodes::PushColorStyle(ImNodesCol_NodeBackgroundSelected, IM_COL32(0x17, 0x17, 0x17, 255));
 		
+		Material& material = m_Scene.Materials[i];
+		ImNodes::SetNodeGridSpacePos(i, ImVec2(100, 100 + i*200));
+		ImNodes::SetNodeDraggable(i, true);
 		ImNodes::BeginNode(i);
 		ImNodes::BeginNodeTitleBar();
-		ImGui::TextUnformatted("Principled BRDF");
+		ImGui::Text("%s | Principled BRDF", material.Name.c_str());
 		ImNodes::EndNodeTitleBar();
-		Material& material = m_Scene.Materials[i];
 				     
 		// Here we overwrite window value
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
@@ -165,7 +169,7 @@ virtual void OnUIRender() override
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("Base Color");
 		ImGui::SameLine(0, 32);
-		if (ImGui::ColorButton("Default Value", ImVec4(material.Albedo.r, material.Albedo.g, material.Albedo.b, 1), 0, ImVec2(144,20)))
+		if (ImGui::ColorButton("Default Value", ImVec4(material.Albedo.r, material.Albedo.g, material.Albedo.b, 1), 0, ImVec2(144,16)))
 			ImGui::OpenPopup("hi-picker");
 		if (ImGui::BeginPopup("hi-picker"))
 		{
@@ -182,7 +186,7 @@ virtual void OnUIRender() override
 		
 		// Metallic config
 		ImGui::Text("Metallic");
-		ImGui::SameLine(0, 54);
+		ImGui::SameLine(0, 48);
 		int metallic = material.Metallic;
 		ImGui::DragInt( "##roughness", &metallic, 1.0f, 0.0f, 1.0f); 
 		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); material.Metallic = metallic; }
@@ -264,12 +268,12 @@ virtual void OnUIRender() override
 	auto image = m_Renderer.GetFinalImage();
 	if (image)
 		ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0,1), ImVec2(1,0));
-
-	ImGui::Text("Last Render: %.3fms", m_LastRenderTime);
 	ImGui::End();
 	//----------------------------------------------------------------------------
 	
 	ImGui::PopStyleVar();
+	bool* p_open;
+	FrameCounterOverlay(p_open, m_LastRenderTime);
 	Render();
 }
 
@@ -345,9 +349,9 @@ void SetupImGuiStyle()
 	style.Colors[ImGuiCol_Button]					= ImVec4(0.50f, 0.50f, 0.5f, 0.50f);
 	style.Colors[ImGuiCol_ButtonHovered]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
 	style.Colors[ImGuiCol_ButtonActive]				= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
-	style.Colors[ImGuiCol_Header]					= ImVec4(0.50f, 0.5, 0.5, 0.50f);
-	style.Colors[ImGuiCol_HeaderHovered]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
-	style.Colors[ImGuiCol_HeaderActive]				= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_Header]					= ImVec4(0.05f, 0.05f, 0.05f, 0.0f);
+	style.Colors[ImGuiCol_HeaderHovered]			= ImVec4(0.05f, 0.05f, 0.05f, 0.0f);
+	style.Colors[ImGuiCol_HeaderActive]				= ImVec4(0.05f, 0.05f, 0.05f, 0.0f);
 	style.Colors[ImGuiCol_Separator]				= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
 	style.Colors[ImGuiCol_SeparatorHovered]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
 	style.Colors[ImGuiCol_SeparatorActive]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
@@ -405,6 +409,38 @@ inline void AddTextVertical(ImDrawList* DrawList, const char *text, ImVec2 pos, 
                     text_color);
         pos.y -= glyph->AdvanceX;
     }
+}
+	
+//----------------------------------------------------------------------------
+static void FrameCounterOverlay(bool* p_open, float RenderTime)
+{
+    static int location = 0;
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    if (location >= 0)
+    {
+        const float PAD = 14.0f;
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+        ImVec2 work_size = viewport->WorkSize;
+        ImVec2 window_pos, window_pos_pivot;
+        window_pos.x = (location & 1) ? (work_pos.x + work_size.x - 1) : (work_pos.x + 1);
+        window_pos.y = (location & 2) ? (work_pos.y + work_size.y - 18) : (work_pos.y + 18);
+        window_pos_pivot.x = (location & 1) ? 1.0f : 0.0f;
+        window_pos_pivot.y = (location & 2) ? 1.0f : 0.0f;
+        ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+        window_flags |= ImGuiWindowFlags_NoMove;
+    }
+    else if (location == -2)
+    {
+        // Center window
+        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        window_flags |= ImGuiWindowFlags_NoMove;
+    }
+    ImGui::SetNextWindowBgAlpha(0.00f); // Transparent background
+    if (ImGui::Begin("Example: Simple overlay", p_open, window_flags))
+            ImGui::Text("Last Render: %.3f ms", RenderTime);
+    ImGui::End();
 }
 	
 private:

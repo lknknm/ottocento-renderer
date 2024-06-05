@@ -1,6 +1,6 @@
 # Ottocento Renderer
 
-![Ottocento Renderer](./doc/assets/img/banner.jpg)
+![Ottocento Renderer](./doc/assets/img/Ottocento_Screenshot.jpg)
 
 Ottocento Renderer is a study project developed by Lucas M. with the intent of learning the building blocks of Raytracing and Graphics Programming in C++. The core idea is to build a basic rendering application with a codebase that can be used as a model for new experiments, mainly focused on learning the algorithms, architecture/design patterns, performance optimizations and math related to the different sides of computer graphics. It is important to notice that, since this is a study project, most of the features of a regular rendering application will be missing, as well as sophisticated optimization algorithms. Still, I hope to learn each concept to the best of my ability as I go.
 

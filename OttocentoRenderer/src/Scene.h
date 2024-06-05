@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <cvt/wstring>
 
 struct SkyColor
 {
@@ -10,6 +11,7 @@ struct SkyColor
 
 struct Material
 {
+    std::string Name = "Default Material";
     glm::vec3 Albedo{ 1.0f };
     float Roughness = 1.0f;
     bool Metallic = 0;
