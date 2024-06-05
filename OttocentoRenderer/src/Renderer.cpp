@@ -1,4 +1,4 @@
-#include "Renderer.h"
+ #include "Renderer.h"
 #include "Walnut/Random.h"
 #include <execution>
 # define M_PI           3.14159265358979323846  /* pi */
@@ -13,6 +13,16 @@ namespace Utils
 		uint8_t a = (color.a * 255.0f);
 
 		uint32_t result = (a << 24) | (b << 16) | (g << 8) | r;
+		return result;
+	}
+	static uint32_t ConvertToGamma(const glm::vec4& color)
+	{
+		uint8_t r = (color.r / 255.0f);
+		uint8_t g = (color.g / 255.0f);
+		uint8_t b = (color.b / 255.0f);
+		uint8_t a = (color.a / 255.0f);
+
+		uint32_t result = (a >> 24) | (b >> 16) | (g >> 8) | r;
 		return result;
 	}
 }

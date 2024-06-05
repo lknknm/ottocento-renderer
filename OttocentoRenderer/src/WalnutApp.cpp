@@ -4,12 +4,15 @@
 #include "Walnut/Image.h"
 #include "Walnut/Random.h"
 #include "Walnut/Timer.h"
-#include <Walnut/ImGui/imnodes.h>
+#include "Walnut/ImGui/imnodes.h"
 
 #include "Camera.h"
 #include "Renderer.h"
 
 #include <glm/gtc/type_ptr.hpp>
+
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui_internal.h"
 
 using namespace Walnut;
 
@@ -67,6 +70,7 @@ ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f)
 		light.Intensity = 15.0f;
 		m_Scene.Lights.push_back(light);
 	}
+	SetupImGuiStyle();
 }
 
 //----------------------------------------------------------------------------
@@ -80,13 +84,13 @@ virtual void OnUpdate(float ts) override
 virtual void OnUIRender() override
 {
 	//----------------------------------------------------------------------------
-	ImGui::Begin("Environment");
+	ImGui::Begin(ICON_MS_PUBLIC);
 	ImGui::ColorEdit3("Background Color", glm::value_ptr(m_Scene.SkyColor.Albedo)); 
 	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 	ImGui::End();
 
 	//----------------------------------------------------------------------------
-	ImGui::Begin("Camera Settings");
+	ImGui::Begin(ICON_MS_VIDEOCAM);
 
 	ImGui::DragFloat3("Position", glm::value_ptr(m_Camera.m_Position), 0.1f);
 	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
@@ -97,15 +101,15 @@ virtual void OnUIRender() override
 	
 	ImGui::End();
 	//----------------------------------------------------------------------------
-
+	
 	//----------------------------------------------------------------------------
-	ImGui::Begin("Light Settings");
+	ImGui::Begin(ICON_MS_LIGHTBULB);
 	ImGui::Text("Light Settings");
 	ImGui::Separator();
 	for (size_t i = 0; i < m_Scene.Lights.size(); i++)
 	{
 		ImGui::PushID(i);
-
+		
 		ImGui::Checkbox("Active", &m_Scene.Lights[i].isActive); 
 		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 		
@@ -132,32 +136,83 @@ virtual void OnUIRender() override
 	//----------------------------------------------------------------------------
 
 	//----------------------------------------------------------------------------
-	ImGui::Begin("Shader Editor");
-
+	// Principled BRDF Node Editor - i.e. Material - configuration
+	ImGui::Begin(ICON_MS_RADIO_BUTTON_CHECKED);
 	ImNodes::BeginNodeEditor();
+	ImGui::SetWindowFontScale(.85f);
 	for (size_t i = 0; i < m_Scene.Materials.size(); i++)
 	{
+		ImGui::PushItemWidth(144);
+		ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(0x83, 0x18, 0x43, 255));
+		ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(0x83, 0x18, 0x43, 255));
+		ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(0x83, 0x18, 0x43, 255));
+		ImNodes::PushColorStyle(ImNodesCol_NodeBackground, IM_COL32(0x17, 0x17, 0x17, 255));
+		ImNodes::PushColorStyle(ImNodesCol_NodeBackgroundHovered, IM_COL32(0x17, 0x17, 0x17, 255));
+		ImNodes::PushColorStyle(ImNodesCol_NodeBackgroundSelected, IM_COL32(0x17, 0x17, 0x17, 255));
+		
 		ImNodes::BeginNode(i);
 		ImNodes::BeginNodeTitleBar();
 		ImGui::TextUnformatted("Principled BRDF");
 		ImNodes::EndNodeTitleBar();
 		Material& material = m_Scene.Materials[i];
+				     
+		// Here we overwrite window value
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		ImRect backup = window->WorkRect;  
+		window->WorkRect.Min.x = window->DC.CursorPos.x;
+		window->WorkRect.Max.x = window->WorkRect.Min.x + 144;
+
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Base Color");
+		ImGui::SameLine(0, 32);
+		if (ImGui::ColorButton("Default Value", ImVec4(material.Albedo.r, material.Albedo.g, material.Albedo.b, 1), 0, ImVec2(144,20)))
+			ImGui::OpenPopup("hi-picker");
+		if (ImGui::BeginPopup("hi-picker"))
+		{
+			ImGui::ColorPicker3("##ColorPicker", glm::value_ptr(material.Albedo));
+			if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+			ImGui::EndPopup();
+		}
+
+		// Roughness config
+		ImGui::Text("Roughness");
+		ImGui::SameLine(0, 30);
+		ImGui::DragFloat( "##roughness", &material.Roughness, 0.001f, 0.0f, 1.0f); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 		
-		ImGui::ColorEdit3("Base Color", glm::value_ptr(material.Albedo)); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::Checkbox("Metallic", &material.Metallic); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::ColorEdit3("Emission Color", glm::value_ptr(material.EmissionColor)); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::DragFloat("Emission Power", &material.EmissionPower, 0.05f, 0.0f, FLT_MAX); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+		// Metallic config
+		ImGui::Text("Metallic");
+		ImGui::SameLine(0, 54);
+		int metallic = material.Metallic;
+		ImGui::DragInt( "##roughness", &metallic, 1.0f, 0.0f, 1.0f); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); material.Metallic = metallic; }
 		
+		ImGui::NewLine();
+		if (ImGui::CollapsingHeader("Emission"))
+		{
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Base Color");
+			ImGui::SameLine(0, 32);
+			if (ImGui::ColorButton("Default Value", ImVec4(material.EmissionColor.r,
+																	material.EmissionColor.g,
+																	material.EmissionColor.b,
+																	1),
+																	0,
+																	ImVec2(144,20)))
+				ImGui::OpenPopup("hi-picker");
+			if (ImGui::BeginPopup("hi-picker"))
+			{
+				ImGui::ColorPicker3("##ColorPicker", glm::value_ptr(material.EmissionColor));
+				if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+				ImGui::EndPopup();
+			}
+		
+			ImGui::Text("Power");
+			ImGui::SameLine(0, 60);
+			ImGui::DragFloat( "##power", &material.EmissionPower, 0.001f, 0.0f, 1.0f); 
+			if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+		}
+		window->WorkRect = backup;  // recover correct value
 		ImNodes::EndNode();
 	}
 	ImNodes::EndNodeEditor();
@@ -166,7 +221,7 @@ virtual void OnUIRender() override
 	//----------------------------------------------------------------------------
 	
 	//----------------------------------------------------------------------------
-	ImGui::Begin("Scene Settings");
+	ImGui::Begin(ICON_MS_VISIBILITY);
 	ImGui::Text("Scene Settings");
 	ImGui::Separator();
 	for (size_t i = 0; i < m_Scene.Spheres.size(); i++)
@@ -229,6 +284,129 @@ void Render()
 
 	m_LastRenderTime = timer.ElapsedMillis();
 }
+
+	
+void SetupImGuiStyle()
+{
+	// Purple Comfy style by RegularLunar from ImThemes
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.Alpha = 1.0f;
+	style.DisabledAlpha = 0.10f;
+	style.WindowPadding = ImVec2(8.0f, 8.0f);
+	style.WindowRounding = 10.0f;
+	style.WindowBorderSize = 0.0f;
+	style.WindowMinSize = ImVec2(30.0f, 30.0f);
+	style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
+	style.WindowMenuButtonPosition = ImGuiDir_Right;
+	style.ChildRounding = 5.0f;
+	style.ChildBorderSize = 1.0f;
+	style.PopupRounding = 10.0f;
+	style.PopupBorderSize = 0.0f;
+	style.FramePadding = ImVec2(5.0f, 3.5f);
+	style.FrameRounding = 5.0f;
+	style.FrameBorderSize = 0.0f;
+	style.ItemSpacing = ImVec2(5.0f, 4.0f);
+	style.ItemInnerSpacing = ImVec2(5.0f, 5.0f);
+	style.CellPadding = ImVec2(4.0f, 2.0f);
+	style.IndentSpacing = 5.0f;
+	style.ColumnsMinSpacing = 5.0f;
+	style.ScrollbarSize = 15.0f;
+	style.ScrollbarRounding = 9.0f;
+	style.GrabMinSize = 15.0f;
+	style.GrabRounding = 5.0f;
+	style.TabRounding = 5.0f;
+	style.TabBorderSize = 0.0f;
+	style.TabMinWidthForCloseButton = 0.0f;
+	style.ColorButtonPosition = ImGuiDir_Right;
+	style.ButtonTextAlign = ImVec2(0.5f, 0.5f);
+	style.SelectableTextAlign = ImVec2(0.0f, 0.0f);
+
+	style.Colors[ImGuiCol_Text]				        = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+	style.Colors[ImGuiCol_TextDisabled]		        = ImVec4(1.0f, 1.0f, 1.0f, 0.3f);
+	style.Colors[ImGuiCol_WindowBg]			        = ImVec4(0.05f, 0.05f, 0.05f, 1.0f);
+	style.Colors[ImGuiCol_ChildBg]			        = ImVec4(1.0f, 0.0f, 0.0f, 0.0f);
+	style.Colors[ImGuiCol_PopupBg]			        = ImVec4(0.05f, 0.05f, 0.05f, 1.0f);
+	style.Colors[ImGuiCol_Border]			        = ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_BorderShadow]		        = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	style.Colors[ImGuiCol_FrameBg]			        = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
+	style.Colors[ImGuiCol_FrameBgHovered]	        = ImVec4(0.35f, 0.40f, 0.50f, 0.50f);
+	style.Colors[ImGuiCol_FrameBgActive]	        = ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_TitleBg]				    = ImVec4(0.05f, 0.05f, 0.05f, 1.0f);
+	style.Colors[ImGuiCol_TitleBgActive]		    = ImVec4(0.05f, 0.05f, 0.05f, 1.0f);
+	style.Colors[ImGuiCol_TitleBgCollapsed]		    = ImVec4(0.25f, 0.25f, 0.25f, 0.0f);
+	style.Colors[ImGuiCol_MenuBarBg]				= ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	style.Colors[ImGuiCol_ScrollbarBg]				= ImVec4(0.15f, 0.15f, 0.15f, 0.0f);
+	style.Colors[ImGuiCol_ScrollbarGrab]			= ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
+	style.Colors[ImGuiCol_ScrollbarGrabHovered]		= ImVec4(0.23f, 0.23f, 0.23f, 1.0f);
+	style.Colors[ImGuiCol_ScrollbarGrabActive]		= ImVec4(0.30f, 0.30f, 0.30f, 1.0f);
+	style.Colors[ImGuiCol_CheckMark]				= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_SliderGrab]				= ImVec4(0.50, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_SliderGrabActive]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_Button]					= ImVec4(0.50f, 0.50f, 0.5f, 0.50f);
+	style.Colors[ImGuiCol_ButtonHovered]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_ButtonActive]				= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_Header]					= ImVec4(0.50f, 0.5, 0.5, 0.50f);
+	style.Colors[ImGuiCol_HeaderHovered]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_HeaderActive]				= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_Separator]				= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_SeparatorHovered]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_SeparatorActive]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_ResizeGrip]				= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_ResizeGripHovered]		= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_ResizeGripActive]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_Tab]						= ImVec4(0.05f, 0.05f, 0.05f, 0.50f);
+	style.Colors[ImGuiCol_TabHovered]				= ImVec4(0.30f, 0.30f, 0.3f, 0.50f);
+	style.Colors[ImGuiCol_TabActive]				= ImVec4(0.25f, 0.25f, 0.25f, 0.50f);
+	style.Colors[ImGuiCol_TabUnfocused]				= ImVec4(0.0f, 0.45f, 1.0f, 0.0f);
+	style.Colors[ImGuiCol_TabUnfocusedActive]		= ImVec4(0.25f, 0.25f, 0.25f, 0.0f);
+	style.Colors[ImGuiCol_PlotLines]				= ImVec4(0.30f, 0.30f, 0.30f, 1.0f);
+	style.Colors[ImGuiCol_PlotLinesHovered]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_PlotHistogram]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_PlotHistogramHovered]		= ImVec4(0.70f, 0.70f, 0.90f, 0.50f);
+	style.Colors[ImGuiCol_TableHeaderBg]			= ImVec4(0.20f, 0.20f, 0.20f, 1.0f);
+	style.Colors[ImGuiCol_TableBorderStrong]		= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_TableBorderLight]			= ImVec4(0.50f, 0.30f, 1.0f, 0.3f);
+	style.Colors[ImGuiCol_TableRowBg]				= ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	style.Colors[ImGuiCol_TableRowBgAlt]			= ImVec4(1.0f, 1.0f, 1.0f, 0.035f);
+	style.Colors[ImGuiCol_TextSelectedBg]			= ImVec4(0.50f, 0.30f, 1.0f, 0.50f);
+	style.Colors[ImGuiCol_DragDropTarget]			= ImVec4(1.0f, 1.0f, 0.0f, 0.90f);
+	style.Colors[ImGuiCol_NavHighlight]				= ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+	style.Colors[ImGuiCol_NavWindowingHighlight]	= ImVec4(1.0f, 1.0f, 1.0f, 0.71f);
+	style.Colors[ImGuiCol_NavWindowingDimBg]		= ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+	style.Colors[ImGuiCol_ModalWindowDimBg]			= ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+}
+
+	// Draws vertical text. The position is the bottom left of the text rect.
+inline void AddTextVertical(ImDrawList* DrawList, const char *text, ImVec2 pos, ImU32 text_color)
+{
+    pos.x = IM_ROUND(pos.x);
+    pos.y = IM_ROUND(pos.y);
+    ImFont *font = GImGui->Font;
+    const ImFontGlyph *glyph;
+    char c;
+    ImGuiContext& g = *GImGui;
+    ImVec2 text_size = ImGui::CalcTextSize(text);
+    while ((c = *text++))
+    {
+        glyph = font->FindGlyph(c);
+        if (!glyph) continue;
+
+        DrawList->PrimReserve(6, 4);
+        DrawList->PrimQuadUV(
+                ImVec2(pos.x + glyph->Y0, pos.y - glyph->X0),
+                ImVec2(glyph->Y0, -glyph->X1),
+                ImVec2(glyph->Y1, -glyph->X1),
+                ImVec2(glyph->Y1, -glyph->X0),
+
+                ImVec2(glyph->U0, glyph->V0),
+                ImVec2(glyph->U1, glyph->V0),
+                ImVec2(glyph->U1, glyph->V1),
+                ImVec2(glyph->U0, glyph->V1),
+                    text_color);
+        pos.y -= glyph->AdvanceX;
+    }
+}
+	
 private:
 	Renderer m_Renderer;
 	Camera m_Camera;
@@ -238,8 +416,6 @@ private:
 	float m_LastRenderTime = 0.0f;
 	glm::vec3 LightPos;
 };
-
-
 
 //----------------------------------------------------------------------------
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)

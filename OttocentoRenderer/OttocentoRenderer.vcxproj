@@ -165,6 +165,13 @@
       <Project>{C038E8D9-ACDA-12B0-9595-260481D69900}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\Fonts\MaterialIcons-Regular.ttf" />
+    <Content Include="Assets\Fonts\MaterialIconsOutlined-Regular.otf" />
+    <Content Include="Assets\Fonts\MaterialIconsRound-Regular.otf" />
+    <Content Include="Assets\Fonts\MaterialIconsSharp-Regular.otf" />
+    <Content Include="Assets\Fonts\MaterialIconsTwoTone-Regular.otf" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
