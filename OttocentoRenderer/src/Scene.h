@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <cvt/wstring>
+#include <../stb_image/stb_image.h>
 
 struct SkyColor
 {
@@ -14,7 +15,7 @@ struct Material
     std::string Name = "Default Material";
     glm::vec3 Albedo{ 1.0f };
     float Roughness = 1.0f;
-    bool Metallic = 0;
+    bool Metallic = 0; 
     glm::vec3 EmissionColor{ 0.0f };
 	float EmissionPower = 0.0f;
     float AmbientOcclusion;

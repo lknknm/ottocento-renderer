@@ -141,7 +141,6 @@ virtual void OnUIRender() override
 	// Principled BRDF Node Editor - i.e. Material - configuration
 	ImGui::Begin(ICON_MS_RADIO_BUTTON_CHECKED);
 	ImNodes::BeginNodeEditor();
-	ImGui::SetWindowFontScale(.85f);
 	for (size_t i = 0; i < m_Scene.Materials.size(); i++)
 	{
 		ImGui::PushItemWidth(144);
@@ -186,10 +185,9 @@ virtual void OnUIRender() override
 		
 		// Metallic config
 		ImGui::Text("Metallic");
-		ImGui::SameLine(0, 48);
-		int metallic = material.Metallic;
-		ImGui::DragInt( "##roughness", &metallic, 1.0f, 0.0f, 1.0f); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); material.Metallic = metallic; }
+		ImGui::SameLine(0, 50);
+		ImGui::Checkbox("##metallic", &material.Metallic);
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 		
 		ImGui::NewLine();
 		if (ImGui::CollapsingHeader("Emission"))

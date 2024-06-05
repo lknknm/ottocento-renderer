@@ -22,3 +22,6 @@ Once you've cloned, run `scripts/Setup.bat` to generate Visual Studio 2022 solut
  - [Scratch a Pixel 4.0: Learn Computer Graphics Programming](https://www.scratchapixel.com/index.html)
  - [Stanford CS348b Lecture 12 — Reflection Models](https://graphics.stanford.edu/courses/cs348b-18-spring-content/lectures/12_reflection2/12_reflection2_slides.pdf)
  - [Physically Based Rendering // OpenGL Tutorial #43](https://www.youtube.com/watch?v=XK_p2MxGBQs)
+ - [Learn OpenGL PBR Ligthing](https://learnopengl.com/PBR/Lighting)
+ - [Real Shading in Unreal Engine 4 (Brian Karis)](https://blog.selfshadow.com/publications/s2013-shading-course/#course_content)
+ - [ Kohi #034: Loading and Swapping Textures (Vulkan Game Engine Series) ](https://www.youtube.com/watch?v=2IxHj52-Kag)

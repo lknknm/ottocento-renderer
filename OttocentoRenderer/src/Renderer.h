@@ -16,6 +16,8 @@ public:
 		glm::vec3 WorldPosition;
 		glm::vec3 WorldNormal;
 
+		double u;
+		double v;
 		int ObjectIndex;
 	};
 
