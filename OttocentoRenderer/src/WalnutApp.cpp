@@ -90,53 +90,7 @@ virtual void OnUIRender() override
 	ImGui::ColorEdit3("Background Color", glm::value_ptr(m_Scene.SkyColor.Albedo)); 
 	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 	ImGui::End();
-
-	//----------------------------------------------------------------------------
-	ImGui::Begin(ICON_MS_VIDEOCAM);
-
-	ImGui::DragFloat3("Position", glm::value_ptr(m_Camera.m_Position), 0.1f);
-	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 	
-	ImGui::Text("Camera Forward X: %f", m_Camera.GetDirection().x);
-	ImGui::Text("Camera Forward Y: %f", m_Camera.GetDirection().y);
-	ImGui::Text("Camera Forward Z: %f", m_Camera.GetDirection().z);
-	
-	ImGui::End();
-	//----------------------------------------------------------------------------
-	
-	//----------------------------------------------------------------------------
-	ImGui::Begin(ICON_MS_LIGHTBULB);
-	ImGui::Text("Light Settings");
-	ImGui::Separator();
-	for (size_t i = 0; i < m_Scene.Lights.size(); i++)
-	{
-		ImGui::PushID(i);
-		
-		ImGui::Checkbox("Active", &m_Scene.Lights[i].isActive); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-		
-		ImGui::ColorEdit3("Light Color", glm::value_ptr(m_Scene.Lights[i].lightColor)); 
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::DragFloat3("Position", glm::value_ptr(m_Scene.Lights[i].Position), 0.1f);
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-		
-		ImGui::DragFloat("Intensity", (&m_Scene.Lights[i].Intensity), 0.1f, 0.0f, 5000.0f, "%.3f");
-		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-
-		ImGui::Separator();
-		ImGui::PopID();
-	}
-	if (ImGui::Button("Add Light"))
-	{
-		Light light;
-		light.Position = {1.0f, 1.0f, 0.8f};
-		light.Radius = 0.5f;
-		m_Scene.Lights.push_back(light);
-	}
-	ImGui::End();
-	//----------------------------------------------------------------------------
-
 	//----------------------------------------------------------------------------
 	// Principled BRDF Node Editor - i.e. Material - configuration
 	ImGui::Begin(ICON_MS_RADIO_BUTTON_CHECKED);
@@ -221,7 +175,65 @@ virtual void OnUIRender() override
 	
 	ImGui::End();
 	//----------------------------------------------------------------------------
+
+	//----------------------------------------------------------------------------
+	ImGui::Begin(ICON_MS_VIDEOCAM);
+
+	ImGui::DragFloat3("Position", glm::value_ptr(m_Camera.m_Position), 0.1f);
+	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
 	
+	ImGui::Text("Depth of Field");
+	ImGui::Text("Angle");
+	ImGui::SameLine(0, 32);
+	ImGui::DragFloat("##angle", (&m_Camera.m_DefocusAngle), 0.1f, 0.0f, 90.0f, "%.3f");
+	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+	
+	ImGui::Text("Distance");
+	ImGui::SameLine(0, 32);
+	ImGui::DragFloat("##dist", (&m_Camera.m_FocusDist), 0.1f, 0.0f, 90.0f, "%.3f");
+	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+	
+	ImGui::Text("Camera Forward X: %f", m_Camera.GetDirection().x);
+	ImGui::Text("Camera Forward Y: %f", m_Camera.GetDirection().y);
+	ImGui::Text("Camera Forward Z: %f", m_Camera.GetDirection().z);
+	
+	ImGui::End();
+	//----------------------------------------------------------------------------
+	
+	//----------------------------------------------------------------------------
+	ImGui::Begin(ICON_MS_LIGHTBULB);
+	ImGui::Text("Light Settings");
+	ImGui::Separator();
+	for (size_t i = 0; i < m_Scene.Lights.size(); i++)
+	{
+		ImGui::PushID(i);
+		
+		ImGui::Checkbox("Active", &m_Scene.Lights[i].isActive); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+		
+		ImGui::ColorEdit3("Light Color", glm::value_ptr(m_Scene.Lights[i].lightColor)); 
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::DragFloat3("Position", glm::value_ptr(m_Scene.Lights[i].Position), 0.1f);
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+		
+		ImGui::DragFloat("Intensity", (&m_Scene.Lights[i].Intensity), 0.1f, 0.0f, 5000.0f, "%.3f");
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+
+		ImGui::Separator();
+		ImGui::PopID();
+	}
+	if (ImGui::Button("Add Light"))
+	{
+		Light light;
+		light.Position = {1.0f, 1.0f, 0.8f};
+		light.Radius = 0.5f;
+		m_Scene.Lights.push_back(light);
+	}
+	ImGui::End();
+	//----------------------------------------------------------------------------
+
 	//----------------------------------------------------------------------------
 	ImGui::Begin(ICON_MS_VISIBILITY);
 	ImGui::Text("Scene Settings");

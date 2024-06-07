@@ -16,16 +16,6 @@ namespace Utils
 		uint32_t result = (a << 24) | (b << 16) | (g << 8) | r;
 		return result;
 	}
-	static uint32_t ConvertToGamma(const glm::vec4& color)
-	{
-		uint8_t r = (color.r / 255.0f);
-		uint8_t g = (color.g / 255.0f);
-		uint8_t b = (color.b / 255.0f);
-		uint8_t a = (color.a / 255.0f);
-
-		uint32_t result = (a >> 24) | (b >> 16) | (g >> 8) | r;
-		return result;
-	}
 }
 
 //----------------------------------------------------------------------------
@@ -162,7 +152,7 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y) 
 {
 	Ray ray;
-	ray.Origin = m_ActiveCamera->GetPosition();
+	ray.Origin = (m_ActiveCamera->m_DefocusAngle <= 0) ? m_ActiveCamera->GetPosition() : m_ActiveCamera->DefocusDiskSample();
 	ray.Direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
 	glm::vec3 finalColor(0.0f);
 	glm::vec3 Lo = glm::vec3(0.0f);	// reflectance equation

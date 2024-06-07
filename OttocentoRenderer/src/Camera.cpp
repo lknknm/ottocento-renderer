@@ -4,6 +4,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include "Walnut/Random.h"
 #include "Walnut/Input/Input.h"
 
 using namespace Walnut;
@@ -29,13 +30,10 @@ bool Camera::OnUpdate(float ts)
 		Input::SetCursorMode(CursorMode::Normal);
 		return false;
 	}
-
-	Input::SetCursorMode(CursorMode::Locked);
-
+	
 	bool moved = false;
-
-	constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
-	glm::vec3 rightDirection = glm::cross(m_ForwardDirection, upDirection);
+	glm::vec3 rightDirection = glm::cross(m_ForwardDirection, m_UpVector);
+	Input::SetCursorMode(CursorMode::Locked);
 
 	float speed = 5.0f;
 
@@ -62,12 +60,12 @@ bool Camera::OnUpdate(float ts)
 	}
 	if (Input::IsKeyDown(KeyCode::Q))
 	{
-		m_Position -= upDirection * speed * ts;
+		m_Position -= m_UpVector * speed * ts;
 		moved = true;
 	}
 	else if (Input::IsKeyDown(KeyCode::E))
 	{
-		m_Position += upDirection * speed * ts;
+		m_Position += m_UpVector * speed * ts;
 		moved = true;
 	}
 
@@ -97,9 +95,11 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 {
 	if (width == m_ViewportWidth && height == m_ViewportHeight)
 		return;
-
-	m_ViewportWidth = width;
+	auto theta = glm::radians(m_VerticalFOV);
+	auto h = tan(theta/2);
+	
 	m_ViewportHeight = height;
+	m_ViewportWidth = width;
 
 	RecalculateProjection();
 	RecalculateRayDirections();
@@ -120,6 +120,13 @@ void Camera::RecalculateView()
 {
 	m_View = glm::lookAt(m_Position, m_Position + m_ForwardDirection, glm::vec3(0, 1, 0));
 	m_InverseView = glm::inverse(m_View);
+	
+	//Depth of field calculation
+	glm::vec3 rightDirection = glm::cross(m_ForwardDirection, m_UpVector);
+	glm::vec3 cameraUpDirection = glm::cross(-m_ForwardDirection, rightDirection);
+	float defocusRadius = m_FocusDist * tan(glm::radians(m_DefocusAngle / 2));
+	m_DefocusDiskU = defocusRadius * rightDirection;
+	m_DefocusDiskV = cameraUpDirection * defocusRadius;
 }
 
 void Camera::RecalculateRayDirections()
@@ -138,4 +145,12 @@ void Camera::RecalculateRayDirections()
 			m_RayDirections[x + y * m_ViewportWidth] = rayDirection;
 		}
 	}
+}
+
+//----------------------------------------------------------------------------
+// Returns a random point in the camera defocus disk.
+const glm::vec3 Camera::DefocusDiskSample() const
+{
+	auto p = Walnut::Random::InUnitDisk();
+	return GetPosition() + (p[0] * m_DefocusDiskU) + (p[1] * m_DefocusDiskV);
 }
