@@ -26,6 +26,7 @@ public:
 	float GetRotationSpeed();
 
 	// Depth of Field Implementation
+	bool m_DepthOfFieldOn = false;
 	float m_DefocusAngle = 10;  // Variation angle of rays through each pixel
 	float m_FocusDist = 1.0;    // Distance from camera lookfrom point to plane of perfect focus
 	
