@@ -15,6 +15,26 @@ Once you've cloned, run `scripts/Setup.bat` to generate Visual Studio 2022 solut
  - To see how we style our code, please refer to the [Code Style Guide](/doc/styleguide.md).
  - A proper development report with my progress is in the works.
 
+### Features
+- [x] Simple functioning camera.
+- [x] Moveable Camera with WASD + Mouse controls.
+- [x] Ray casting and Sphere Intersection.
+- [x] Pathtracing accumulation.
+- [x] Multiple lights in a scene with the possibility to spawn more lights and control its parameters.
+- [x] Multiple objects in a scene with the possibility to spawn more objects and control its parameters.
+- [x] Physically Based BRDF Materials wiht Schlick GGX calculation.
+- [x] Metallic Materials using the same BRDF Materials as above.
+- [x] Camera Depth of Field Blur (Still in the need of being enhanced).
+- [x] Basic Multithreading serialization optimization.
+- [ ] Bounding Volume Hierarchies (BVH) optimization.
+- [ ] Texture Mapping.
+- [ ] Rendering Quadrilaterals.
+- [ ] Cornell Box simple scene for testing.
+- [ ] More robust light controls with emissive materials.
+- [ ] Rendering Triangles.
+- [ ] Global Illumination.
+- [ ] Volumes, Smoke and Fog Boxes.
+- [ ] Scene loading from other software.
 
 ## Resources
  - [The Cherno Ray Tracing series.](https://www.youtube.com/watch?v=gfW1Fhd9u9Q&list=PLlrATfBNZ98edc5GshdBtREv5asFW3yXl)
@@ -25,3 +45,4 @@ Once you've cloned, run `scripts/Setup.bat` to generate Visual Studio 2022 solut
  - [Learn OpenGL PBR Ligthing](https://learnopengl.com/PBR/Lighting)
  - [Real Shading in Unreal Engine 4 (Brian Karis)](https://blog.selfshadow.com/publications/s2013-shading-course/#course_content)
  - [ Kohi #034: Loading and Swapping Textures (Vulkan Game Engine Series) ](https://www.youtube.com/watch?v=2IxHj52-Kag)
+ - [Coding Adventure: Optimizing a Ray Tracer (by building a BVH)](https://www.youtube.com/watch?v=C1H4zIiCOaI)

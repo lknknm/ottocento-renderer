@@ -24,7 +24,7 @@ public:
 	struct Settings
 	{
 		bool Accumulate = true;
-		int bounces = 12;
+		int bounces = 5;
 	};
 
 	Renderer() = default;

@@ -96,7 +96,6 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 	if (width == m_ViewportWidth && height == m_ViewportHeight)
 		return;
 	auto theta = glm::radians(m_VerticalFOV);
-	auto h = tan(theta/2);
 	
 	m_ViewportHeight = height;
 	m_ViewportWidth = width;
@@ -116,6 +115,7 @@ void Camera::RecalculateProjection()
 	m_InverseProjection = glm::inverse(m_Projection);
 }
 
+//----------------------------------------------------------------------------
 void Camera::RecalculateView()
 {
 	m_View = glm::lookAt(m_Position, m_Position + m_ForwardDirection, glm::vec3(0, 1, 0));
@@ -126,9 +126,10 @@ void Camera::RecalculateView()
 	glm::vec3 cameraUpDirection = glm::cross(-m_ForwardDirection, rightDirection);
 	float defocusRadius = m_FocusDist * tan(glm::radians(m_DefocusAngle / 2));
 	m_DefocusDiskU = defocusRadius * rightDirection;
-	m_DefocusDiskV = cameraUpDirection * defocusRadius;
+	m_DefocusDiskV = defocusRadius * cameraUpDirection;
 }
 
+//----------------------------------------------------------------------------
 void Camera::RecalculateRayDirections()
 {
 	m_RayDirections.resize(m_ViewportWidth * m_ViewportHeight);
@@ -152,5 +153,5 @@ void Camera::RecalculateRayDirections()
 const glm::vec3 Camera::DefocusDiskSample() const
 {
 	auto p = Walnut::Random::InUnitDisk();
-	return GetPosition() + (p[0] * m_DefocusDiskU) + (p[1] * m_DefocusDiskV);
+	return m_Position + (p[0] * m_DefocusDiskU) + (p[1] * m_DefocusDiskV);
 }

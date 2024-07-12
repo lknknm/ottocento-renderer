@@ -26,13 +26,14 @@ public:
 	float GetRotationSpeed();
 
 	// Depth of Field Implementation
+	float m_VerticalFOV = 45.0f;
 	bool m_DepthOfFieldOn = false;
 	float m_DefocusAngle = 10;  // Variation angle of rays through each pixel
 	float m_FocusDist = 1.0;    // Distance from camera lookfrom point to plane of perfect focus
-	
-private:
 	void RecalculateProjection();
 	void RecalculateView();
+	
+private:
 	void RecalculateRayDirections();
 
 	glm::mat4 m_Projection{ 1.0f };
@@ -42,7 +43,6 @@ private:
 	glm::vec3 m_ForwardDirection{0.0f, 0.0f, 0.0f};
 	glm::vec3 m_UpVector{0.0f, 1.0f, 0.0f};
 
-	float m_VerticalFOV = 45.0f;
 	float m_NearClip = 0.1f;
 	float m_FarClip = 100.0f;
 	
@@ -56,9 +56,7 @@ private:
 	// Depth of Field Implementation. Calculate the camera defocus disk basis vectors.
 	glm::vec3 m_PixelDeltaU{0.0f};        // Offset to pixel to the right
 	glm::vec3 m_PixelDeltaV{0.0f};        // Offset to pixel below
-	glm::vec3 u, v, w;     
 	glm::vec3 m_DefocusDiskU;       // Defocus disk horizontal radius
 	glm::vec3 m_DefocusDiskV;       // Defocus disk vertical radius
 	float m_DefocusRadius;
-	//double m_DefocusRadius = m_FocusDist * tan(glm::radians(m_DefocusAngle / 2));
 };

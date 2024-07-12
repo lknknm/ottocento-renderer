@@ -152,7 +152,7 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y) 
 {
 	Ray ray;
-	ray.Origin = (m_ActiveCamera->m_DefocusAngle <= 0) ? m_ActiveCamera->GetPosition() : m_ActiveCamera->DefocusDiskSample();
+	ray.Origin = (m_ActiveCamera->m_DefocusAngle <= 0 || !m_ActiveCamera->m_DepthOfFieldOn) ? m_ActiveCamera->GetPosition() : m_ActiveCamera->DefocusDiskSample();
 	ray.Direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
 	glm::vec3 finalColor(0.0f);
 	glm::vec3 Lo = glm::vec3(0.0f);	// reflectance equation

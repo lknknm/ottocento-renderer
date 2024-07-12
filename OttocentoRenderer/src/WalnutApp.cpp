@@ -183,20 +183,28 @@ virtual void OnUIRender() override
 	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
 
 	
-	ImGui::Text("Depth of Field");
-	ImGui::Text("Angle");
-	ImGui::SameLine(0, 32);
-	ImGui::DragFloat("##angle", (&m_Camera.m_DefocusAngle), 0.1f, 0.0f, 90.0f, "%.3f");
-	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
+	ImGui::DragFloat("VFOV", (&m_Camera.m_VerticalFOV), 0.1f, 1.0f, 90.0f, "%.3f");
+	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); m_Camera.RecalculateView(); m_Camera.RecalculateProjection(); }
+
+	if (ImGui::CollapsingHeader("Depth of Field"))
+	{
+		ImGui::Checkbox("On", &m_Camera.m_DepthOfFieldOn);
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); m_Camera.RecalculateView(); m_Camera.RecalculateProjection(); }
+		
+		ImGui::Text("Angle");
+		ImGui::SameLine(0, 51);
+		ImGui::DragFloat("##angle", (&m_Camera.m_DefocusAngle), 0.1f, 0.0f, 90.0f, "%.3f");
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); m_Camera.RecalculateView(); m_Camera.RecalculateProjection(); }
+		
+		ImGui::Text("Distance");
+		ImGui::SameLine(0, 32);
+		ImGui::DragFloat("##dist", (&m_Camera.m_FocusDist), 0.1f, 0.0f, 90.0f, "%.3f");
+		if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); m_Camera.RecalculateView(); m_Camera.RecalculateProjection(); }
+	}
 	
-	ImGui::Text("Distance");
-	ImGui::SameLine(0, 32);
-	ImGui::DragFloat("##dist", (&m_Camera.m_FocusDist), 0.1f, 0.0f, 90.0f, "%.3f");
-	if (ImGui::IsItemEdited()) { m_Renderer.ResetFrameIndex(); }
-	
-	ImGui::Text("Camera Forward X: %f", m_Camera.GetDirection().x);
-	ImGui::Text("Camera Forward Y: %f", m_Camera.GetDirection().y);
-	ImGui::Text("Camera Forward Z: %f", m_Camera.GetDirection().z);
+	// ImGui::Text("Camera Forward X: %f", m_Camera.GetDirection().x);
+	// ImGui::Text("Camera Forward Y: %f", m_Camera.GetDirection().y);
+	// ImGui::Text("Camera Forward Z: %f", m_Camera.GetDirection().z);
 	
 	ImGui::End();
 	//----------------------------------------------------------------------------
